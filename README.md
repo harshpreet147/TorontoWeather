@@ -8,7 +8,6 @@ docker pull jasbirnetwork/torontoweather:v2
 
 ```
 docker run -p 7575:7575 jasbirnetwork/torontoweather:v2
-
 ```
 
 ## Access weather app
@@ -85,7 +84,6 @@ weatherData := WeatherData{
 	WindSpeed:   data["wind"].(map[string]interface{})["speed"].(float64),
 	WeatherIcon: weatherDescription["icon"].(string),
 }
-
 ```
 * Convert the temperature from Kelvin to Celsius `kelvinToCelsius(mainData["temp"].(float64))`
 * Create a WeatherData struct with the extracted information
@@ -115,7 +113,7 @@ func main() {
 
 ## Test app 
 
-* Define out testcase inside `main_test.go` file.
+* Define testcase inside `main_test.go` file.
 
 ```
 req, err := http.NewRequest("GET", "/weather", nil)
@@ -190,5 +188,6 @@ go test
 * If all test will pass than you will see below response
 
 ```
-
+PASS
+ok      github.com/harshpreet147/torontoTime    0.005s
 ```
