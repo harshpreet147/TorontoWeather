@@ -30,7 +30,7 @@ Open [http://localhost:7575/weather](http://localhost:7575/weather) with your br
 ```
 
 
-## Explaination
+## Explanation
 
 ```
 url := fmt.Sprintf("http://api.openweathermap.org/data/2.5/weather?q=%s&appid=%s", city, openWeatherMapAPIKey)
