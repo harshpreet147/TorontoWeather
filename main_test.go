@@ -42,9 +42,6 @@ func TestWeatherHandler(t *testing.T) {
 		t.Errorf("Error decoding JSON response: %v", err)
 	}
 
-	// Perform additional assertions on the weatherData struct if needed
-	// ...
-
 	// Example assertion (check if the city is as expected)
 	expectedCity := "Toronto"
 	if weatherData.City != expectedCity {
