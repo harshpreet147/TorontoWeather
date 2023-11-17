@@ -1,10 +1,15 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
+	"io"
 	"net/http"
 	"os"
 )
+
+const openWeatherMapAPIKey = "983dc274aec42fb5bb52778a7d2805d3"
+const city = "Toronto"
 
 func weatherHandler(w http.ResponseWriter, r *http.Request) {
 	url := fmt.Sprintf("http://api.openweathermap.org/data/2.5/weather?q=%s&appid=%s", city, openWeatherMapAPIKey)
