@@ -24,13 +24,30 @@ Open [http://localhost:7575/weather](http://localhost:7575/weather) with your br
     "description": "overcast clouds",
     "humidity": 75,
     "wind_speed": 8.23,
-    "weather_icon": "04d"
 }
 
 ```
 
 
 ## Explanation
+
+```
+type WeatherData struct {
+	City        string  `json:"city"`
+	Temperature string  `json:"temperature"`
+	Description string  `json:"description"`
+	Humidity    float64 `json:"humidity"`
+	WindSpeed   float64 `json:"wind_speed"`
+}
+```
+
+### Define a `struct` for store api response.
+* City value will be store in `string` datatype.
+* Temperature value will be store in `string` datatype.
+* Description value will be store in `string` datatype.
+* Humidity value will be store in `float64` datatype.
+* WindSpeed value will be store in `float64` datatype.
+* WeatherIcon value will be store in `string` datatype.
 
 ```
 url := fmt.Sprintf("http://api.openweathermap.org/data/2.5/weather?q=%s&appid=%s", city, openWeatherMapAPIKey)
