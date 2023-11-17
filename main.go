@@ -1,10 +1,16 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
+	"io"
 	"net/http"
 	"os"
 )
+
+
+const openWeatherMapAPIKey = "983dc274aec42fb5bb52778a7d2805d3"
+const city = "Toronto"
 
 type WeatherData struct {
 	City        string  `json:"city"`
