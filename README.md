@@ -65,7 +65,7 @@ func init() {
 	db.AutoMigrate(&TimeLog{})
 }
 ```
-* The first we define create the sqllite file with the name `toronto_time.db`.
+* The first we have create the sqllite file with the name `toronto_time.db`.
 * Inside `init()` we connect to our database and run migration as per defined struct.
 
 ### Insert data
