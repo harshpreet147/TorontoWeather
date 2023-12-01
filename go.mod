@@ -1,3 +1,3 @@
-module github.com/harshpreet147/torontoTime
+module github.com/harshpreet147/torontoTimeDb
 
-go 1.21.1
+go 1.21.4
