@@ -1,102 +1,93 @@
+// main.go
 package main
 
 import (
-	"encoding/json"
 	"fmt"
-	"io"
+	"log"
 	"net/http"
-	"os"
+	"time"
+
+	"github.com/gin-gonic/gin"
+	"gorm.io/driver/sqlite"
+	"gorm.io/gorm"
 )
 
+// Database connection
+var db *gorm.DB
 
-const openWeatherMapAPIKey = "983dc274aec42fb5bb52778a7d2805d3"
-const city = "Toronto"
+func init() {
+	// Open database connection using gorm with SQLite
+	var err error
+	db, err = gorm.Open(sqlite.Open("file:toronto_time.db?cache=shared&_loc=auto"), &gorm.Config{})
+	if err != nil {
+		log.Fatal(err)
+	}
 
-type WeatherData struct {
-	City        string  `json:"city"`
-	Temperature string  `json:"temperature"`
-	Description string  `json:"description"`
-	Humidity    float64 `json:"humidity"`
-	WindSpeed   float64 `json:"wind_speed"`
-	WeatherIcon string  `json:"weather_icon"`
+	// Auto Migrate the time_log table
+	db.AutoMigrate(&TimeLog{})
 }
 
-func kelvinToCelsius(kelvin float64) string {
-	celsius := kelvin - 273.15
-	return fmt.Sprintf("%.2f", celsius)
+// TimeLog struct for the time_log table
+type TimeLog struct {
+	ID        uint      `gorm:"primaryKey" json:"id"`
+	Timestamp time.Time `json:"timestamp"`
 }
 
-func weatherHandler(w http.ResponseWriter, r *http.Request) {
-	url := fmt.Sprintf("http://api.openweathermap.org/data/2.5/weather?q=%s&appid=%s", city, openWeatherMapAPIKey)
+// API endpoint to get all times from the time_log table
+func getAllTimes(c *gin.Context) {
+	var timeLogs []TimeLog
 
-	response, err := http.Get(url)
+	// Retrieve all entries from the time_log table
+	result := db.Find(&timeLogs)
+	if result.Error != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to retrieve time logs"})
+		return
+	}
+
+	// Respond with the retrieved time logs in JSON format
+	c.JSON(http.StatusOK, timeLogs)
+}
+
+// API endpoint to get current time in Toronto
+func getCurrentTime(c *gin.Context) {
+	// Get current time in Toronto
+	torontoTimeZone, err := time.LoadLocation("America/Toronto")
 	if err != nil {
-		http.Error(w, "Error fetching weather", http.StatusInternalServerError)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to load Toronto timezone"})
 		return
 	}
-	defer response.Body.Close()
+	currentTime := time.Now().In(torontoTimeZone)
 
-	body, err := io.ReadAll(response.Body)
-	if err != nil {
-		http.Error(w, "Error reading response body", http.StatusInternalServerError)
-		return
+	// Create a TimeLog instance
+	timeLog := TimeLog{
+		Timestamp: currentTime,
 	}
 
-	var data map[string]interface{}
-	err = json.Unmarshal(body, &data)
-	if err != nil {
-		http.Error(w, fmt.Sprintf("Error decoding JSON: %v", err), http.StatusInternalServerError)
-		return
-	}
-
-	// Log the JSON response for debugging
-	fmt.Println("JSON Response:", string(body))
-
-	// Check if the "main" key exists in the map
-	mainData, ok := data["main"].(map[string]interface{})
-	if !ok {
-		http.Error(w, "Error extracting main weather information", http.StatusInternalServerError)
+	// Insert current time into the database using gorm
+	result := db.Create(&timeLog)
+	if result.Error != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to log timestamp"})
 		return
 	}
 
-	weatherArray, ok := data["weather"].([]interface{})
-	if !ok || len(weatherArray) == 0 {
-		http.Error(w, "Error extracting weather information", http.StatusInternalServerError)
-		return
-	}
-
-	weatherDescription, ok := weatherArray[0].(map[string]interface{})
-	if !ok {
-		http.Error(w, "Error extracting weather description", http.StatusInternalServerError)
-		return
-	}
-
-	// Convert the temperature from Kelvin to Celsius
-	temperatureCelsius := kelvinToCelsius(mainData["temp"].(float64))
-
-	// Create a WeatherData struct with the extracted information
-	weatherData := WeatherData{
-		City:        city,
-		Temperature: temperatureCelsius,
-		Description: weatherDescription["description"].(string),
-		Humidity:    mainData["humidity"].(float64),
-		WindSpeed:   data["wind"].(map[string]interface{})["speed"].(float64),
-		WeatherIcon: weatherDescription["icon"].(string),
-	}
-
-	// Convert the WeatherData struct to JSON and write it to the response
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(weatherData)
+	// Respond with the current time in JSON format
+	c.JSON(http.StatusOK, gin.H{"current_time": currentTime.Format(time.RFC3339)})
 }
 
 func main() {
-	http.HandleFunc("/weather", weatherHandler)
+	// Set up Gin router
+	router := gin.Default()
 
+	// Define API routes
+	router.GET("/current-time", getCurrentTime)
+	router.GET("/time", getCurrentTime)
+	router.GET("/all-times", getAllTimes)
+
+	// Run the server
 	port := 7575
-	fmt.Printf("Server is running on :%d...\n", port)
-	err := http.ListenAndServe(fmt.Sprintf(":%d", port), nil)
+	addr := fmt.Sprintf(":%d", port)
+	err := router.Run(addr)
 	if err != nil {
-		fmt.Println("Error:", err)
-		os.Exit(1)
+		log.Fatal(err)
 	}
 }
