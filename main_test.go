@@ -1,50 +1,49 @@
+// main_test.go
 package main
 
 import (
-	"encoding/json"
 	"net/http"
 	"net/http/httptest"
 	"testing"
+
+	"github.com/gin-gonic/gin"
+	"github.com/stretchr/testify/assert"
 )
 
-func TestWeatherHandler(t *testing.T) {
-	// Create a mock HTTP request
-	req, err := http.NewRequest("GET", "/weather", nil)
-	if err != nil {
-		t.Fatal(err)
-	}
+func TestGetCurrentTimeEndpoint(t *testing.T) {
+	// Set up a test router
+	router := gin.Default()
+	router.GET("/current-time", getCurrentTime)
+
+	// Create a mock HTTP request to the /current-time endpoint
+	req, err := http.NewRequest("GET", "/current-time", nil)
+	assert.NoError(t, err)
 
 	// Create a response recorder to record the response
-	rr := httptest.NewRecorder()
+	w := httptest.NewRecorder()
 
-	// Create an HTTP handler from the weatherHandler function
-	handler := http.HandlerFunc(weatherHandler)
+	// Perform the request
+	router.ServeHTTP(w, req)
 
-	// Serve the HTTP request and record the response
-	handler.ServeHTTP(rr, req)
+	// Check the HTTP status code
+	assert.Equal(t, http.StatusOK, w.Code)
+}
 
-	// Check the status code
-	if status := rr.Code; status != http.StatusOK {
-		t.Errorf("Handler returned wrong status code: got %v want %v",
-			status, http.StatusOK)
-	}
+func TestGetAllTimesEndpoint(t *testing.T) {
+	// Set up a test router
+	router := gin.Default()
+	router.GET("/all-times", getAllTimes)
 
-	// Check the content type header
-	expectedContentType := "application/json"
-	if contentType := rr.Header().Get("Content-Type"); contentType != expectedContentType {
-		t.Errorf("Handler returned unexpected content type: got %v want %v",
-			contentType, expectedContentType)
-	}
+	// Create a mock HTTP request to the /all-times endpoint
+	req, err := http.NewRequest("GET", "/all-times", nil)
+	assert.NoError(t, err)
 
-	// Parse the JSON response
-	var weatherData WeatherData
-	if err := json.NewDecoder(rr.Body).Decode(&weatherData); err != nil {
-		t.Errorf("Error decoding JSON response: %v", err)
-	}
+	// Create a response recorder to record the response
+	w := httptest.NewRecorder()
 
-	// Example assertion (check if the city is as expected)
-	expectedCity := "Toronto"
-	if weatherData.City != expectedCity {
-		t.Errorf("Unexpected city: got %v want %v", weatherData.City, expectedCity)
-	}
+	// Perform the request
+	router.ServeHTTP(w, req)
+
+	// Check the HTTP status code
+	assert.Equal(t, http.StatusOK, w.Code)
 }
